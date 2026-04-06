@@ -4,7 +4,12 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "SpainWay",
   description:
-    "Plataforma web turística para descubrir destinos, planificar rutas y vivir experiencias en España.",
+    "Plataforma de turismo inteligente para descubrir destinos e itinerarios personalizados en España.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
