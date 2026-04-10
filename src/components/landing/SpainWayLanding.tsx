@@ -1,12 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import DemoSlides from "@/components/ui/DemoSlides";
+import InfoModal from "@/components/ui/InfoModal";
 
 const imgTraveller = "/imagenes/Viajera.png";
+const imgHeroShape = "/imagenes/RectanguloViajero.png";
 const imgLogoSpainWay = "/imagenes/LogoSpainway.png";
-const imgMadrid = "/imagenes/Madrid.png";
-const imgBarcelona = "/imagenes/Barcelona.png";
-const imgValencia = "/imagenes/Valencia.png";
+const imgMadrid = "/imagenes/destinos/Madrid.png";
+const imgBarcelona = "/imagenes/destinos/Barcelona.png";
+const imgValencia = "/imagenes/destinos/Valencia.png";
 const imgPlanning = "/imagenes/Playa.png";
 const imgLogoMini = "/imagenes/LogoSpainway.png";
 const imgAvatar1 = "/imagenes/PersonaRiendo.png";
@@ -58,39 +62,6 @@ const testimonios = [
   },
 ];
 
-const modalContent: Record<string, { title: string; body: string }> = {
-  sobre: {
-    title: "Sobre SpainWay",
-    body:
-      "SpainWay es una plataforma de turismo inteligente orientada a descubrir destinos de España y generar itinerarios personalizados mediante inteligencia artificial, mapa interactivo e integración de datos abiertos.",
-  },
-  objetivos: {
-    title: "Objetivos del TFG",
-    body:
-      "El objetivo principal del proyecto es desarrollar una plataforma capaz de integrar fuentes abiertas y generar itinerarios personalizados y adaptativos para viajeros que desean descubrir España de forma más eficiente, visual y contextualizada.",
-  },
-  arquitectura: {
-    title: "Arquitectura",
-    body:
-      "La solución se organiza en módulos diferenciados: capa de integración de datos abiertos, asistente conversacional, motor de itinerarios, mapa interactivo y una capa de presentación web pensada para facilitar la exploración y la planificación.",
-  },
-  datos: {
-    title: "Datos abiertos",
-    body:
-      "SpainWay se apoya en datos turísticos, culturales, naturales y de movilidad procedentes de fuentes públicas nacionales y autonómicas para construir un catálogo interno más rico y útil para el usuario.",
-  },
-  fuentes: {
-    title: "Fuentes turísticas",
-    body:
-      "La plataforma está planteada para trabajar con portales oficiales, catálogos abiertos y servicios públicos relacionados con patrimonio, recursos naturales, movilidad, meteorología y puntos de interés turísticos.",
-  },
-  casos: {
-    title: "Casos de uso",
-    body:
-      "Entre los casos de uso principales destacan la planificación de viajes personalizados, la adaptación del itinerario ante imprevistos, la exploración de recursos cercanos, la visualización del recorrido en mapa y la creación de rutas temáticas.",
-  },
-};
-
 function TestimonioCard({
   nombre,
   ciudad,
@@ -136,81 +107,316 @@ function TestimonioCard({
   );
 }
 
-function InfoModal({
-  isOpen,
+function FeatureCard({
   title,
-  body,
-  onClose,
+  description,
+  icon,
+  onClick,
+  active = false,
 }: {
-  isOpen: boolean;
   title: string;
-  body: string;
-  onClose: () => void;
+  description: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  active?: boolean;
 }) {
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-6">
-      <div className="w-full max-w-[680px] rounded-[28px] bg-white p-8 shadow-2xl">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <h3
-              className="text-[32px] font-bold text-[#14183E]"
-              style={{ fontFamily: "Volkhov, serif" }}
-            >
-              {title}
-            </h3>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F5F5F5] text-[#14183E] transition hover:bg-[#DF6951] hover:text-white"
-            aria-label="Cerrar"
-          >
-            ✕
-          </button>
-        </div>
-
-        <p className="mt-6 text-[17px] leading-8 text-[#5E6282]">{body}</p>
-
-        <div className="mt-8">
-          <button
-            onClick={onClose}
-            className="rounded-[12px] bg-[#DF6951] px-6 py-3 text-white transition hover:bg-[#c95b45]"
-          >
-            Cerrar
-          </button>
-        </div>
+    <button
+      onClick={onClick}
+      className={`rounded-[30px] bg-white px-8 py-10 text-center transition hover:shadow-[0_30px_60px_rgba(0,0,0,0.08)] ${
+        active ? "ring-2 ring-[#DF6951]" : ""
+      }`}
+    >
+      <div className="mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-[20px] bg-[#FFF1DA]">
+        {icon}
       </div>
-    </div>
+      <h3 className="mb-4 text-[22px] font-semibold text-[#1E1D4C]">{title}</h3>
+      <p className="text-[16px] leading-7 text-[#5E6282]">{description}</p>
+      <p className="mt-5 text-sm font-semibold text-[#DF6951]">
+        Pulsar para saber más
+      </p>
+    </button>
   );
 }
 
 export default function SpainWayLanding() {
-  const [grupoActivo, setGrupoActivo] = useState(0);
+  const router = useRouter();
+  const [showDemo, setShowDemo] = useState(false);
   const [modalKey, setModalKey] = useState<string | null>(null);
+  const [featureKey, setFeatureKey] = useState<string | null>(null);
+  const [grupoActivo, setGrupoActivo] = useState(0);
 
-  const grupos = useMemo(() => {
-    return [
-      testimonios.slice(0, 2),
-      testimonios.slice(2, 4),
-      testimonios.slice(4, 6),
-    ];
-  }, []);
+  const totalGroups = Math.ceil(testimonios.length / 2);
+  const testimoniosVisibles = testimonios.slice(grupoActivo * 2, grupoActivo * 2 + 2);
 
-  const testimoniosVisibles = grupos[grupoActivo];
-  const modalData = modalKey ? modalContent[modalKey] : null;
+  const nextTestimonials = () => {
+    setGrupoActivo((prev) => (prev + 1) % totalGroups);
+  };
 
-  const openModal = (key: string) => setModalKey(key);
-  const closeModal = () => setModalKey(null);
+  const prevTestimonials = () => {
+    setGrupoActivo((prev) => (prev - 1 + totalGroups) % totalGroups);
+  };
+
+  const modalMap = {
+    sobre: {
+      title: "Sobre SpainWay",
+      subtitle: "Proyecto de turismo inteligente",
+      content: (
+        <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr]">
+          <div>
+            <p className="text-[17px] leading-8 text-[#5E6282]">
+              SpainWay es una plataforma de turismo inteligente orientada a
+              descubrir destinos de España y generar itinerarios personalizados
+              mediante inteligencia artificial, visualización en mapa e
+              integración de datos abiertos.
+            </p>
+            <p className="mt-5 text-[17px] leading-8 text-[#5E6282]">
+              La propuesta busca unificar información turística dispersa y
+              convertirla en una experiencia más clara, útil y adaptada a las
+              necesidades reales del viajero.
+            </p>
+          </div>
+          <div className="rounded-[24px] bg-[#F8F9FF] p-6">
+            <h4 className="text-[22px] font-semibold text-[#14183E]">
+              Qué diferencia a SpainWay
+            </h4>
+            <ul className="mt-4 space-y-3 text-[16px] leading-7 text-[#5E6282]">
+              <li>• Descubrimiento de destinos en España</li>
+              <li>• Itinerarios visuales y personalizados</li>
+              <li>• Enfoque apoyado en datos abiertos</li>
+              <li>• Experiencia orientada al viajero</li>
+            </ul>
+          </div>
+        </div>
+      ),
+    },
+    objetivos: {
+      title: "Objetivos del TFG",
+      subtitle: "Enfoque del proyecto",
+      content: (
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div className="rounded-[24px] bg-[#FFF1DA] p-6">
+            <h4 className="text-[22px] font-semibold text-[#14183E]">
+              Objetivo general
+            </h4>
+            <p className="mt-4 text-[16px] leading-8 text-[#5E6282]">
+              Diseñar una plataforma capaz de ayudar al viajero a descubrir
+              destinos y generar itinerarios inteligentes por España mediante IA
+              conversacional y fuentes abiertas.
+            </p>
+          </div>
+          <div className="rounded-[24px] bg-[#FDEEF5] p-6">
+            <h4 className="text-[22px] font-semibold text-[#14183E]">
+              Valor principal
+            </h4>
+            <p className="mt-4 text-[16px] leading-8 text-[#5E6282]">
+              Reducir el tiempo de planificación, mejorar la claridad del viaje
+              y ofrecer una experiencia más contextualizada y personalizada.
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    arquitectura: {
+      title: "Arquitectura",
+      subtitle: "Estructura funcional",
+      content: (
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            ["Datos abiertos", "Normalización e integración de recursos turísticos."],
+            ["Asistente IA", "Recogida de preferencias en lenguaje natural."],
+            ["Motor de itinerarios", "Generación de rutas coherentes y viables."],
+            ["Interfaz web", "Visualización clara de destinos, rutas y apoyo al usuario."],
+          ].map(([title, text]) => (
+            <div key={title} className="rounded-[22px] bg-[#F8F9FF] p-5">
+              <h4 className="text-[20px] font-semibold text-[#14183E]">{title}</h4>
+              <p className="mt-3 text-[15px] leading-7 text-[#5E6282]">{text}</p>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    datos: {
+      title: "Datos abiertos",
+      subtitle: "Base informativa de la plataforma",
+      content: (
+        <div className="space-y-5 text-[16px] leading-8 text-[#5E6282]">
+          <p>
+            SpainWay se apoya en información procedente de fuentes públicas
+            relacionadas con patrimonio, turismo, recursos naturales, movilidad
+            y contexto territorial.
+          </p>
+          <div className="rounded-[22px] bg-[#F8F9FF] p-6">
+            <p>
+              El objetivo es construir una base más rica, fiable y reutilizable
+              para alimentar recomendaciones, vistas de descubrimiento y
+              propuestas de itinerario.
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    fuentes: {
+      title: "Fuentes turísticas",
+      subtitle: "Información oficial y contextual",
+      content: (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-[22px] bg-[#FFF1DA] p-6">
+            <h4 className="text-[20px] font-semibold text-[#14183E]">
+              Qué tipos de fuentes se contemplan
+            </h4>
+            <ul className="mt-4 space-y-2 text-[16px] leading-7 text-[#5E6282]">
+              <li>• Portales turísticos oficiales</li>
+              <li>• Catálogos de patrimonio</li>
+              <li>• Recursos naturales y culturales</li>
+              <li>• Información complementaria de contexto</li>
+            </ul>
+          </div>
+          <div className="rounded-[22px] bg-[#FDEEF5] p-6">
+            <h4 className="text-[20px] font-semibold text-[#14183E]">
+              Para qué sirven
+            </h4>
+            <p className="mt-4 text-[16px] leading-8 text-[#5E6282]">
+              Permiten enriquecer la exploración de destinos, construir una vista
+              más completa del viaje y acercar la propuesta del TFG a una
+              plataforma útil y creíble.
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    casos: {
+      title: "Casos de uso",
+      subtitle: "Cómo se utilizaría SpainWay",
+      content: (
+        <div className="grid gap-6 md:grid-cols-2">
+          {[
+            "Planificación de viaje personalizada",
+            "Descubrimiento de destinos por intereses",
+            "Visualización del itinerario en mapa",
+            "Adaptación del plan según contexto",
+          ].map((item) => (
+            <div key={item} className="rounded-[20px] border border-[#EFEFEF] p-5">
+              <p className="text-[17px] font-semibold text-[#14183E]">{item}</p>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+  } as const;
+
+  const featureModalMap = {
+    asistente: {
+      title: "Asistente conversacional",
+      subtitle: "Cómo ayuda al viajero",
+      content: (
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div>
+            <p className="text-[17px] leading-8 text-[#5E6282]">
+              El asistente conversacional permite recoger preferencias de forma
+              natural: destino, duración, intereses, restricciones o estilo de
+              viaje.
+            </p>
+            <p className="mt-5 text-[17px] leading-8 text-[#5E6282]">
+              En lugar de obligar al usuario a rellenar formularios complejos,
+              SpainWay transforma la interacción en una experiencia más cercana,
+              guiada y comprensible.
+            </p>
+          </div>
+          <div className="rounded-[24px] bg-[#F8F9FF] p-6">
+            <h4 className="text-[22px] font-semibold text-[#14183E]">
+              Qué aporta
+            </h4>
+            <ul className="mt-4 space-y-3 text-[16px] leading-7 text-[#5E6282]">
+              <li>• Recoge preferencias del usuario</li>
+              <li>• Mejora la experiencia de entrada</li>
+              <li>• Facilita una interacción más natural</li>
+              <li>• Refuerza la propuesta de valor del TFG</li>
+            </ul>
+          </div>
+        </div>
+      ),
+    },
+    itinerarios: {
+      title: "Itinerarios inteligentes",
+      subtitle: "Planificación personalizada",
+      content: (
+        <div className="space-y-5 text-[17px] leading-8 text-[#5E6282]">
+          <p>
+            SpainWay no se limita a sugerir sitios, sino que organiza un plan por
+            jornadas con una lógica más clara para el usuario.
+          </p>
+          <div className="rounded-[24px] bg-[#FFF1DA] p-6">
+            <p>
+              La idea es construir propuestas visuales y coherentes teniendo en
+              cuenta intereses, duración del viaje y utilidad real del recorrido.
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    mapa: {
+      title: "Mapa interactivo",
+      subtitle: "Visualización del viaje",
+      content: (
+        <div className="space-y-5 text-[17px] leading-8 text-[#5E6282]">
+          <p>
+            El mapa ayuda a entender el itinerario, situar los recursos y hacer
+            más clara la lectura del viaje.
+          </p>
+          <div className="rounded-[24px] bg-[#FDEEF5] p-6">
+            <p>
+              Su papel es convertir la planificación en una experiencia visual y
+              comprensible, reforzando el valor práctico de la plataforma.
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    datos: {
+      title: "Datos abiertos oficiales",
+      subtitle: "Fundamento informativo",
+      content: (
+        <div className="space-y-5 text-[17px] leading-8 text-[#5E6282]">
+          <p>
+            Esta funcionalidad explica que SpainWay se apoya en fuentes públicas
+            para enriquecer el catálogo de recursos turísticos.
+          </p>
+          <div className="rounded-[24px] bg-[#F8F9FF] p-6">
+            <p>
+              Esto da sentido académico y técnico al proyecto, diferenciándolo de
+              una simple web promocional y conectándolo con la propuesta real del
+              TFG.
+            </p>
+          </div>
+        </div>
+      ),
+    },
+  } as const;
+
+  const currentModal = modalKey ? modalMap[modalKey as keyof typeof modalMap] : null;
+  const currentFeatureModal = featureKey
+    ? featureModalMap[featureKey as keyof typeof featureModalMap]
+    : null;
 
   return (
     <div className="w-full overflow-x-hidden bg-white text-[#181E4B]">
+      {showDemo ? <DemoSlides onClose={() => setShowDemo(false)} /> : null}
+
       <InfoModal
-        isOpen={!!modalData}
-        title={modalData?.title ?? ""}
-        body={modalData?.body ?? ""}
-        onClose={closeModal}
+        isOpen={!!currentModal}
+        title={currentModal?.title ?? ""}
+        subtitle={currentModal?.subtitle}
+        content={currentModal?.content ?? null}
+        onClose={() => setModalKey(null)}
+      />
+
+      <InfoModal
+        isOpen={!!currentFeatureModal}
+        title={currentFeatureModal?.title ?? ""}
+        subtitle={currentFeatureModal?.subtitle}
+        content={currentFeatureModal?.content ?? null}
+        onClose={() => setFeatureKey(null)}
       />
 
       {/* HEADER */}
@@ -221,7 +427,7 @@ export default function SpainWayLanding() {
               <img
                 src={imgLogoSpainWay}
                 alt="SpainWay"
-                className="h-[42px] w-auto md:h-[100px]"
+                className="h-[42px] w-auto md:h-[48px]"
               />
             </div>
 
@@ -241,11 +447,17 @@ export default function SpainWayLanding() {
             </nav>
 
             <div className="flex items-center justify-end gap-3 text-[15px] text-[#212832] md:gap-5">
-              <button className="hidden transition hover:text-[#DF6951] md:inline-block">
+              <button
+                onClick={() => router.push("/explorar")}
+                className="hidden transition hover:text-[#DF6951] md:inline-block"
+              >
                 Explorar
               </button>
 
-              <button className="rounded-[6px] border border-[#212832] px-5 py-2.5 font-medium transition hover:border-[#DF6951] hover:bg-[#DF6951] hover:text-white">
+              <button
+                onClick={() => setShowDemo(true)}
+                className="rounded-[6px] border border-[#212832] px-5 py-2.5 font-medium transition hover:border-[#DF6951] hover:bg-[#DF6951] hover:text-white"
+              >
                 Probar demo
               </button>
 
@@ -297,11 +509,17 @@ export default function SpainWayLanding() {
               </p>
 
               <div className="mt-9 flex flex-wrap items-center gap-6">
-                <button className="rounded-[10px] bg-[#DF6951] px-8 py-4 text-[17px] font-semibold text-white shadow-[0_15px_30px_rgba(223,105,81,0.35)] transition hover:bg-[#cf5b45]">
+                <button
+                  onClick={() => router.push("/explorar")}
+                  className="rounded-[10px] bg-[#DF6951] px-8 py-4 text-[17px] font-semibold text-white shadow-[0_15px_30px_rgba(223,105,81,0.35)] transition hover:bg-[#cf5b45]"
+                >
                   Explorar destinos
                 </button>
 
-                <button className="flex items-center gap-4 text-[17px] text-[#686D77] transition hover:text-[#DF6951]">
+                <button
+                  onClick={() => router.push("/asistente")}
+                  className="flex items-center gap-4 text-[17px] text-[#686D77] transition hover:text-[#DF6951]"
+                >
                   <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#DF6951] text-white shadow-[0_12px_25px_rgba(223,105,81,0.35)]">
                     <svg
                       className="ml-1 h-5 w-5"
@@ -317,7 +535,12 @@ export default function SpainWayLanding() {
             </div>
 
             <div className="relative flex min-h-[460px] items-center justify-center lg:min-h-[720px]">
-
+              <img
+                src={imgHeroShape}
+                alt=""
+                aria-hidden="true"
+                className="absolute right-[-90px] top-[10px] z-0 hidden w-[760px] max-w-none lg:block xl:right-[-110px] xl:top-[0px] xl:w-[820px]"
+              />
 
               <div className="absolute left-[8%] top-[36%] z-[1] hidden rotate-[-22deg] text-[#00A7E7] lg:block">
                 <svg className="h-14 w-14" fill="currentColor" viewBox="0 0 24 24">
@@ -341,7 +564,7 @@ export default function SpainWayLanding() {
         </div>
       </section>
 
-      {/* SERVICIOS */}
+      {/* FUNCIONALIDADES */}
       <section id="asistente" className="bg-white py-24">
         <div className="mx-auto max-w-[1280px] px-6 lg:px-10">
           <div className="text-center">
@@ -357,65 +580,53 @@ export default function SpainWayLanding() {
           </div>
 
           <div className="mt-18 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[30px] bg-white px-8 py-10 text-center transition hover:shadow-[0_30px_60px_rgba(0,0,0,0.08)]">
-              <div className="mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-[20px] bg-[#FFF1DA]">
+            <FeatureCard
+              title="Asistente conversacional"
+              description="Habla con SpainWay en lenguaje natural para indicar destino, fechas, intereses, presupuesto o restricciones de viaje."
+              onClick={() => setFeatureKey("asistente")}
+              active={featureKey === "asistente"}
+              icon={
                 <svg className="h-10 w-10 text-[#DF6951]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                 </svg>
-              </div>
-              <h3 className="mb-4 text-[22px] font-semibold text-[#1E1D4C]">
-                Asistente conversacional
-              </h3>
-              <p className="text-[16px] leading-7 text-[#5E6282]">
-                Habla con SpainWay en lenguaje natural para indicar destino,
-                fechas, intereses, presupuesto o restricciones de viaje.
-              </p>
-            </div>
+              }
+            />
 
-            <div className="rounded-[30px] bg-white px-8 py-10 text-center transition hover:shadow-[0_30px_60px_rgba(0,0,0,0.08)]">
-              <div className="mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-[20px] bg-[#FFF8D5]">
+            <FeatureCard
+              title="Itinerarios inteligentes"
+              description="Genera rutas viables y personalizadas teniendo en cuenta horarios, tiempos, distancias, accesibilidad y contexto."
+              onClick={() => setFeatureKey("itinerarios")}
+              active={featureKey === "itinerarios"}
+              icon={
                 <svg className="h-10 w-10 text-[#F1A501]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
                 </svg>
-              </div>
-              <h3 className="mb-4 text-[22px] font-semibold text-[#1E1D4C]">
-                Itinerarios inteligentes
-              </h3>
-              <p className="text-[16px] leading-7 text-[#5E6282]">
-                Genera rutas viables y personalizadas teniendo en cuenta
-                horarios, tiempos, distancias, accesibilidad y contexto.
-              </p>
-            </div>
+              }
+            />
 
-            <div id="mapa" className="rounded-[30px] bg-white px-8 py-10 text-center transition hover:shadow-[0_30px_60px_rgba(0,0,0,0.08)]">
-              <div className="mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-[20px] bg-[#FDEEF5]">
+            <FeatureCard
+              title="Mapa interactivo"
+              description="Visualiza puntos de interés, recorridos y recursos cercanos en un mapa pensado para entender mejor cada plan."
+              onClick={() => setFeatureKey("mapa")}
+              active={featureKey === "mapa"}
+              icon={
                 <svg className="h-10 w-10 text-[#DF6951]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
                 </svg>
-              </div>
-              <h3 className="mb-4 text-[22px] font-semibold text-[#1E1D4C]">
-                Mapa interactivo
-              </h3>
-              <p className="text-[16px] leading-7 text-[#5E6282]">
-                Visualiza puntos de interés, recorridos y recursos cercanos en
-                un mapa pensado para entender mejor cada plan.
-              </p>
-            </div>
+              }
+            />
 
-            <div className="rounded-[30px] bg-white px-8 py-10 text-center transition hover:shadow-[0_30px_60px_rgba(0,0,0,0.08)]">
-              <div className="mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-[20px] bg-[#FFF1DA]">
+            <FeatureCard
+              title="Datos abiertos oficiales"
+              description="Integra información turística, cultural, natural y de movilidad procedente de fuentes públicas para enriquecer la experiencia."
+              onClick={() => setFeatureKey("datos")}
+              active={featureKey === "datos"}
+              icon={
                 <svg className="h-10 w-10 text-[#181E4B]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                 </svg>
-              </div>
-              <h3 className="mb-4 text-[22px] font-semibold text-[#1E1D4C]">
-                Datos abiertos oficiales
-              </h3>
-              <p className="text-[16px] leading-7 text-[#5E6282]">
-                Integra información turística, cultural, natural y de movilidad
-                procedente de fuentes públicas para enriquecer la experiencia.
-              </p>
-            </div>
+              }
+            />
           </div>
         </div>
       </section>
@@ -612,7 +823,7 @@ export default function SpainWayLanding() {
 
       {/* TESTIMONIOS */}
       <section id="testimonios" className="bg-white py-24">
-        <div className="mx-auto grid max-w-[1280px] items-start gap-14 px-6 lg:grid-cols-[0.72fr_1.28fr] lg:px-10">
+        <div className="mx-auto grid max-w-[1280px] items-start gap-14 px-6 lg:grid-cols-[0.62fr_1.38fr] lg:px-10">
           <div>
             <p className="mb-3 text-[16px] font-semibold uppercase text-[#5E6282]">
               Testimonios
@@ -627,19 +838,33 @@ export default function SpainWayLanding() {
               Nuestros Viajeros
             </h2>
 
-            <div className="mt-10 flex gap-3">
-              {grupos.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setGrupoActivo(index)}
-                  className={`h-3.5 w-3.5 rounded-full transition ${
-                    grupoActivo === index
-                      ? "bg-[#39425D]"
-                      : "bg-[#E5E5E5] hover:bg-[#C9CAD3]"
-                  }`}
-                  aria-label={`Mostrar grupo ${index + 1}`}
-                />
-              ))}
+            <div className="mt-10 flex items-center gap-4">
+              <button
+                onClick={prevTestimonials}
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-[#DADADA] text-[#5E6282] transition hover:border-[#DF6951] hover:text-[#DF6951]"
+                aria-label="Anterior"
+              >
+                ←
+              </button>
+
+              <div className="flex gap-3">
+                {Array.from({ length: totalGroups }).map((_, index) => (
+                  <span
+                    key={index}
+                    className={`h-3.5 w-3.5 rounded-full ${
+                      grupoActivo === index ? "bg-[#39425D]" : "bg-[#E5E5E5]"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={nextTestimonials}
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-[#DADADA] text-[#5E6282] transition hover:border-[#DF6951] hover:text-[#DF6951]"
+                aria-label="Siguiente"
+              >
+                →
+              </button>
             </div>
           </div>
 
@@ -716,7 +941,7 @@ export default function SpainWayLanding() {
               <ul className="space-y-4 text-[16px] text-[#5E6282]">
                 <li>
                   <button
-                    onClick={() => openModal("sobre")}
+                    onClick={() => setModalKey("sobre")}
                     className="transition hover:text-[#DF6951]"
                   >
                     Sobre SpainWay
@@ -724,7 +949,7 @@ export default function SpainWayLanding() {
                 </li>
                 <li>
                   <button
-                    onClick={() => openModal("objetivos")}
+                    onClick={() => setModalKey("objetivos")}
                     className="transition hover:text-[#DF6951]"
                   >
                     Objetivos del TFG
@@ -732,7 +957,7 @@ export default function SpainWayLanding() {
                 </li>
                 <li>
                   <button
-                    onClick={() => openModal("arquitectura")}
+                    onClick={() => setModalKey("arquitectura")}
                     className="transition hover:text-[#DF6951]"
                   >
                     Arquitectura
@@ -774,7 +999,7 @@ export default function SpainWayLanding() {
               <ul className="space-y-4 text-[16px] text-[#5E6282]">
                 <li>
                   <button
-                    onClick={() => openModal("datos")}
+                    onClick={() => setModalKey("datos")}
                     className="transition hover:text-[#DF6951]"
                   >
                     Datos abiertos
@@ -782,7 +1007,7 @@ export default function SpainWayLanding() {
                 </li>
                 <li>
                   <button
-                    onClick={() => openModal("fuentes")}
+                    onClick={() => setModalKey("fuentes")}
                     className="transition hover:text-[#DF6951]"
                   >
                     Fuentes turísticas
@@ -790,7 +1015,7 @@ export default function SpainWayLanding() {
                 </li>
                 <li>
                   <button
-                    onClick={() => openModal("casos")}
+                    onClick={() => setModalKey("casos")}
                     className="transition hover:text-[#DF6951]"
                   >
                     Casos de uso
@@ -800,59 +1025,49 @@ export default function SpainWayLanding() {
             </div>
           </div>
 
-         <div className="mt-14 border-t border-[#E5E5EA] pt-8">
-  <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-    <div className="flex flex-wrap items-center gap-5">
-      {/* Texto de la etiqueta en el color original gris-azulado */}
-      <p className="text-[16px] font-medium text-[#5E6282]">
-        Descarga la aplicación
-      </p>
+          <div className="mt-14 border-t border-[#E5E5EA] pt-8">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-wrap items-center gap-5">
+                <p className="text-[16px] text-[#5E6282]">
+                  Descarga la aplicación
+                </p>
 
-      <div className="flex flex-wrap gap-3">
-        {/* Botón App Store CORREGIDO: Letra en blanco puro */}
-        <a
-          href="https://www.apple.com/app-store/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 rounded-[14px] bg-[#080809] px-5 py-2 transition-all duration-300 hover:bg-[#DF6951] hover:scale-105 shadow-md"
-        >
-          {/* Icono Apple en blanco para contrastar */}
-          <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-          </svg>
-          {/* Todo el bloque de texto del botón App Store en blanco puro */}
-          <div className="flex flex-col items-start leading-tight text-white">
-            <span className="text-[9px] uppercase opacity-80">Consíguelo en</span>
-            <span className="text-sm font-semibold">App Store</span>
+                <div className="flex flex-wrap gap-4">
+                  <a
+                    href="https://www.apple.com/app-store/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-[18px] bg-[#F1F1F1] px-6 py-3 text-white transition "
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                      </svg>
+                      <span>App Store</span>
+                    </span>
+                  </a>
+
+                  <a
+                    href="https://play.google.com/store"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-[18px] bg-[#F1F1F1] px-6 py-3 text-white transition "
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" />
+                      </svg>
+                      <span>Google Play</span>
+                    </span>
+                  </a>
+                </div>
+              </div>
+
+              <p className="text-[15px] text-[#5E6282]">
+                © 2026 SpainWay. Todos los derechos reservados.
+              </p>
+            </div>
           </div>
-        </a>
-
-        {/* Botón Google Play CORREGIDO: Letra en blanco puro */}
-        <a
-          href="https://play.google.com/store"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 rounded-[14px] bg-[#080809] px-5 py-2 transition-all duration-300 hover:bg-[#DF6951] hover:scale-105 shadow-md"
-        >
-          {/* Icono Google Play en blanco para contrastar */}
-          <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" />
-          </svg>
-          {/* Todo el bloque de texto del botón Google Play en blanco puro */}
-          <div className="flex flex-col items-start leading-tight text-white">
-            <span className="text-[9px] uppercase opacity-80">Disponible en</span>
-            <span className="text-sm font-semibold">Google Play</span>
-          </div>
-        </a>
-      </div>
-    </div>
-
-    {/* Texto de Copyright corregido para evitar errores de caracteres y mantener el color original */}
-    <p className="text-[15px] text-[#5E6282]">
-      &copy; 2026 SpainWay. Todos los derechos reservados.
-    </p>
-  </div>
-</div>
         </div>
       </footer>
     </div>
