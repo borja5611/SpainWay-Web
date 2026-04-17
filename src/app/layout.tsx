@@ -5,11 +5,7 @@ export const metadata: Metadata = {
   title: "SpainWay",
   description:
     "Plataforma de turismo inteligente para descubrir destinos e itinerarios personalizados en España.",
-  icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
-  },
+  // No necesitas la propiedad 'icons' aquí, Next.js ya detectó tu icon.png
 };
 
 export default function RootLayout({

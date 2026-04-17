@@ -88,19 +88,23 @@ export default function ExplorarPage() {
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       <MarketingHeader />
+
       <InfoModal
         isOpen={!!modalDestino}
         title={modalDestino?.nombre ?? ""}
         subtitle={modalDestino?.tipo}
+        onClose={() => setModalDestino(null)}
         content={
           modalDestino ? (
-            <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr]">
-              <div className="overflow-hidden rounded-[24px]">
-                <img
-                  src={`/imagenes/destinos/${modalDestino.slug}.png`}
-                  alt={modalDestino.nombre}
-                  className="h-full w-full object-cover"
-                />
+            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="overflow-hidden rounded-[24px] bg-[#F5F5F5]">
+                <div className="h-[420px] w-full overflow-hidden rounded-[24px]">
+                  <img
+                    src={`/imagenes/destinos/${modalDestino.slug}.png`}
+                    alt={modalDestino.nombre}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
               </div>
 
               <div>
@@ -118,11 +122,22 @@ export default function ExplorarPage() {
                     a la creación de itinerarios personalizados.
                   </p>
                 </div>
+
+                <div className="mt-6 rounded-[22px] bg-[#FFF1DA] p-6">
+                  <h4 className="text-[22px] font-semibold text-[#14183E]">
+                    Qué podría mostrar después
+                  </h4>
+                  <ul className="mt-4 space-y-3 text-[16px] leading-7 text-[#5E6282]">
+                    <li>• Recursos destacados del destino</li>
+                    <li>• Ruta cultural o temática sugerida</li>
+                    <li>• Relación con itinerarios generados</li>
+                    <li>• Vista conectada con mapa e intereses del usuario</li>
+                  </ul>
+                </div>
               </div>
             </div>
           ) : null
         }
-        onClose={() => setModalDestino(null)}
       />
 
       <section className="mx-auto max-w-[1280px] px-6 py-12 lg:px-10">
